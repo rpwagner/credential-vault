@@ -1,6 +1,30 @@
-"""Portable encrypted credential-vault foundations.
+"""Portable encrypted credential storage and Globus token lifecycle."""
 
-The implementation is introduced by repository issue #1.
-"""
+from .errors import (
+    CredentialError,
+    CredentialNotFound,
+    GlobusAuthenticationError,
+    ReauthenticationRequired,
+    UnsupportedPlatformError,
+    VaultLockTimeout,
+    VaultUnavailable,
+)
+from .globus import GlobusTokenManager, VaultTokenStorage
+from .master_keys import MacOSKeychainMasterKeyProvider, MasterKeyProvider
+from .vault import CredentialVault, VaultStatus
 
-__all__: tuple[str, ...] = ()
+__all__ = (
+    "CredentialError",
+    "CredentialNotFound",
+    "CredentialVault",
+    "GlobusAuthenticationError",
+    "GlobusTokenManager",
+    "MacOSKeychainMasterKeyProvider",
+    "MasterKeyProvider",
+    "ReauthenticationRequired",
+    "UnsupportedPlatformError",
+    "VaultLockTimeout",
+    "VaultStatus",
+    "VaultTokenStorage",
+    "VaultUnavailable",
+)
