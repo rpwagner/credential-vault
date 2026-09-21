@@ -36,6 +36,7 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 - Use keyring interfaces and keyrings.cryptfile for encrypted vault persistence; do not copy or reimplement its cryptographic/file-format internals.
 - Use globus-sdk for Globus authentication, token validation, refresh, and token data types rather than reimplementing OAuth.
 - Keep application-specific defaults and policy in consuming applications.
+- Treat GitHub security features such as CodeQL/code scanning as conditional on the repository's current plan and visibility. Enable them when supported; if unavailable, record the limitation and continue. Do not change repository visibility or subscription level solely to enable them.
 - Implement only the issue being worked on. Do not implement anticipated future features.
 - Add or update tests with behavior changes.
 - Keep modules focused on one responsibility and avoid unnecessary nesting.
