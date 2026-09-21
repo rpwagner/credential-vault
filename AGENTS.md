@@ -29,7 +29,7 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 
 - Prefer less code when it produces a simpler maintainable system.
 - Do not rebuild functionality that Python, an existing dependency, keyring, keyrings.cryptfile, or globus-sdk already provides adequately.
-- Before adding a dependency, document the capability needed, existing solutions checked, candidate dependency, local-code alternative, costs/risks, and decision in the issue or pull request.
+- Before adding a dependency, follow `skills/dependency-evaluation/SKILL.md` and record the reasoning in the issue or pull request.
 - Prefer the latest stable supported Python release and latest stable direct dependency releases. Keep them reasonably current unless a documented compatibility, stability, or security reason justifies holding a version back.
 - Keep runtime dependencies minimal. Test/build tools belong in the test extra.
 - Keep secrets out of source code, configuration files, logs, exceptions, object representations, command arguments, and test fixtures committed to Git.
