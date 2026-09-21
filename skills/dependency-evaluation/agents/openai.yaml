@@ -1,0 +1,3 @@
+interface:
+  display_name: "Dependency Evaluation"
+  short_description: "Decide when Python code should reuse or add a dependency."
