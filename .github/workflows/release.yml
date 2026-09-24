@@ -1,0 +1,268 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: PEP 440 release version (X.Y.Z)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    name: Commit release version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      sha: ${{ steps.release.outputs.sha }}
+
+    steps:
+      - name: Require main
+        run: test "${{ github.ref }}" = "refs/heads/main"
+      - name: Check out selected main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install PEP 440 parser
+        run: python -m pip install packaging
+      - name: Verify starting CI and commit release version
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git fetch origin main --no-tags
+          test "$(git rev-parse refs/remotes/origin/main)" = "$GITHUB_SHA"
+
+          # A rerun can reuse only the dedicated version-only commit at main.
+          if test "$(git log -1 --format=%s)" = "chore: release v${REQUESTED_VERSION} [skip ci]"; then
+            test "$(git diff-tree --no-commit-id --name-only -r HEAD)" = "pyproject.toml"
+            start_sha="$(git rev-parse HEAD^)"
+            release_sha="$GITHUB_SHA"
+            export RETRY_RELEASE=true
+          else
+            start_sha="$GITHUB_SHA"
+            release_sha=""
+            export RETRY_RELEASE=false
+          fi
+
+          # Require successful push CI on the exact substantive commit.
+          runs="$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs" \
+            -f branch=main -f event=push -f head_sha="$start_sha" -f per_page=20)"
+          jq -e --arg sha "$start_sha" \
+            '[.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")] | length > 0' \
+            <<< "$runs"
+
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import re
+          import tomllib
+          from packaging.version import Version, InvalidVersion
+
+          value = os.environ["REQUESTED_VERSION"]
+          try:
+              parsed = Version(value)
+          except InvalidVersion as exc:
+              raise SystemExit(f"invalid PEP 440 version: {value!r}") from exc
+          if (str(parsed) != value or len(parsed.release) != 3
+                  or parsed.epoch or parsed.local or parsed.is_devrelease):
+              raise SystemExit(f"unsupported release version: {value!r}")
+          path = Path("pyproject.toml")
+          original = path.read_text()
+          current = tomllib.loads(original)["project"]["version"]
+          retry = os.environ["RETRY_RELEASE"] == "true"
+          if retry:
+              if current != value:
+                  raise SystemExit("release commit does not contain requested version")
+          else:
+              if Version(value) <= Version(current):
+                  raise SystemExit("requested version must increase")
+              updated, count = re.subn(
+                  r'(?m)^(version\s*=\s*")[^"]+(")$',
+                  lambda match: match.group(1) + value + match.group(2),
+                  original, count=1,
+              )
+              if count != 1 or tomllib.loads(updated)["project"]["version"] != value:
+                  raise SystemExit("could not update project version uniquely")
+              path.write_text(updated)
+          PY
+
+          tag="v$REQUESTED_VERSION"
+          if test -n "$(git ls-remote origin "refs/tags/$tag")"; then
+            git fetch origin "refs/tags/$tag:refs/tags/$tag"
+            test -n "$release_sha"
+            test "$(git rev-parse "refs/tags/$tag^{commit}")" = "$release_sha"
+          fi
+
+          if test -z "$release_sha"; then
+            test "$(git diff --name-only)" = "pyproject.toml"
+            git diff --check
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add pyproject.toml
+            git commit -m "chore: release $tag [skip ci]"
+            release_sha="$(git rev-parse HEAD)"
+            # A protected-main rejection is a stop condition; never force-push.
+            git push origin HEAD:refs/heads/main
+          fi
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$release_sha"
+          echo "version=$REQUESTED_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "sha=$release_sha" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: metadata
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: ubuntu-latest
+            python-version: "3.14"
+          - os: macos-latest
+            python-version: "3.14"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.metadata.outputs.sha }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --editable ".[test]"
+          python -m pip check
+      - name: Run test suite
+        run: python -m pytest -ra
+
+  package:
+    needs: metadata
+    name: Build and install distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.metadata.outputs.sha }}
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Verify committed release version
+        env:
+          RELEASE_VERSION: ${{ needs.metadata.outputs.version }}
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          with open("pyproject.toml", "rb") as handle:
+              version = tomllib.load(handle)["project"]["version"]
+          if version != os.environ["RELEASE_VERSION"]:
+              raise SystemExit("release commit version does not match requested version")
+          PY
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+          python -m twine check dist/*
+      - name: Install and smoke-test wheel
+        run: |
+          python -m venv "${RUNNER_TEMP}/wheel-smoke"
+          "${RUNNER_TEMP}/wheel-smoke/bin/python" -m pip install dist/*.whl
+          "${RUNNER_TEMP}/wheel-smoke/bin/python" -I -c "from importlib.metadata import version; import credential_vault; assert version('credential-vault')"
+      - name: Install and smoke-test source distribution
+        run: |
+          python -m venv "${RUNNER_TEMP}/sdist-smoke"
+          "${RUNNER_TEMP}/sdist-smoke/bin/python" -m pip install dist/*.tar.gz
+          "${RUNNER_TEMP}/sdist-smoke/bin/python" -I -c "from importlib.metadata import version; import credential_vault; assert version('credential-vault')"
+      - name: Prepare release distributions
+        run: |
+          cd dist
+          sha256sum *.whl *.tar.gz > SHA256SUMS
+      - name: Upload release distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-distributions
+          path: |
+            dist/*.whl
+            dist/*.tar.gz
+            dist/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    name: Approve and publish GitHub release
+    needs: [metadata, test, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    environment:
+      name: release
+      url: https://github.com/${{ github.repository }}/releases/tag/${{ needs.metadata.outputs.tag }}
+    steps:
+      - name: Check out exact release commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.metadata.outputs.sha }}
+          fetch-depth: 0
+      - name: Download release distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: release-distributions
+          path: dist
+      - name: Create immutable annotated tag
+        env:
+          RELEASE_TAG: ${{ needs.metadata.outputs.tag }}
+          RELEASE_SHA: ${{ needs.metadata.outputs.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/main | cut -f1)" = "$RELEASE_SHA"
+          git fetch --tags
+          if git rev-parse --verify --quiet "refs/tags/$RELEASE_TAG" >/dev/null; then
+            test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$RELEASE_SHA"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag --annotate "$RELEASE_TAG" "$RELEASE_SHA" --message "credential-vault $RELEASE_TAG"
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+      - name: Create or repair GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --generate-notes \
+              --title "$RELEASE_TAG"
+          fi
+          gh release upload "$RELEASE_TAG" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
