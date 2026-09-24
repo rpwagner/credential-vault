@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - v*
   pull_request:
     branches:
       - "*"
@@ -65,10 +63,6 @@ jobs:
         run: |
           python -m pip install --editable .
           echo "PACKAGE_VERSION=$(python -c 'from importlib.metadata import version; print(version("credential-vault"))')" >> "${GITHUB_ENV}"
-      - name: Verify release tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          python -c "import os; expected = 'v' + os.environ['PACKAGE_VERSION']; actual = os.environ['GITHUB_REF_NAME']; assert actual == expected, f'Release tag {actual!r} does not match package version {expected!r}'"
       - name: Build wheel and source distribution
         run: |
           python -m pip install --upgrade pip build twine
@@ -84,47 +78,3 @@ jobs:
           python -m venv "${RUNNER_TEMP}/sdist-smoke"
           "${RUNNER_TEMP}/sdist-smoke/bin/python" -m pip install dist/*.tar.gz
           "${RUNNER_TEMP}/sdist-smoke/bin/python" -I -c "from importlib.metadata import version; import credential_vault; assert version('credential-vault')"
-      - name: Prepare release distributions
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          cd dist
-          sha256sum *.whl *.tar.gz > SHA256SUMS
-      - name: Upload release distributions
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/upload-artifact@v7
-        with:
-          name: release-distributions
-          path: |
-            dist/*.whl
-            dist/*.tar.gz
-            dist/SHA256SUMS
-          if-no-files-found: error
-          retention-days: 7
-
-  release:
-    name: Approve and publish GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs:
-      - test
-      - package
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    environment:
-      name: release
-      url: https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
-    steps:
-      - name: Download release distributions
-        uses: actions/download-artifact@v8
-        with:
-          name: release-distributions
-          path: dist
-      - name: Publish GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* \
-            --repo "${GITHUB_REPOSITORY}" \
-            --verify-tag \
-            --generate-notes \
-            --title "${GITHUB_REF_NAME}"
