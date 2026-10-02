@@ -18,3 +18,17 @@ The Release job needs permission to push its version-only commit to `main`. If a
 The version-only commit skips redundant normal CI because the release workflow validates its exact SHA. If a run fails after the commit, rerun with the same version while that commit remains current `main`; the workflow reuses it. If `main` moves, the retry stops. An existing tag is accepted only if it points to that same commit and is never moved.
 
 Do not dispatch a release until publication is explicitly authorized.
+
+## Exact-source coordinated publication
+
+The existing manual release workflows optionally accept `expected_sha`.
+When supplied, it must be a full lowercase 40-character main commit SHA matching
+the dispatch's `GITHUB_SHA`; a mismatch stops before checkout or any version
+commit/publication. Omit it to retain the current manual release procedure.
+Existing CI checks, review/environment gates, version-only commits, immutable
+tags and non-force main updates remain in place. This input grants no release
+or deployment approval and adds no runtime/package dependency.
+
+[Beauty-system release-set preparation](https://github.com/rpwagner/beauty-runtime/issues/281)
+supplies this guard only after explicit approval of an exact set; orchestration
+is owned outside this repository. Publication remains in these existing workflows.
