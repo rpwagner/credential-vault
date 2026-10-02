@@ -8,6 +8,11 @@ on:
         required: true
         type: string
 
+      expected_sha:
+        description: Optional operator-approved main SHA; a mismatch stops before mutation
+        required: false
+        type: string
+
 permissions:
   contents: read
 
@@ -31,6 +36,16 @@ jobs:
     steps:
       - name: Require main
         run: test "${{ github.ref }}" = "refs/heads/main"
+      - name: Require approved main SHA
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -n "$EXPECTED_SHA"; then
+            [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{40}$ ]]
+            test "$GITHUB_SHA" = "$EXPECTED_SHA"
+          fi
       - name: Check out selected main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
