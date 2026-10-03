@@ -1,5 +1,10 @@
 # Releasing credential-vault
 
+For coupled Beauty-system work, apply the [canonical policy](https://github.com/rpwagner/beauty-runtime/blob/main/AGENTS.md)
+for development/evaluation release stages, evidence, and upgrade consequences.
+The procedures and protected publication approval here remain operational.
+Pending tagged/deployed evaluation is recorded separately from pre-merge tests.
+
 Releases start through **Actions -> Release -> Run workflow** on `main` with `version: X.Y.Z`. The workflow commits only the package version in `pyproject.toml`, validates that commit, and publishes after approval in the protected `release` environment. Publication is to GitHub Releases, not PyPI.
 
 ## One-time repository setup
@@ -32,3 +37,17 @@ or deployment approval and adds no runtime/package dependency.
 [Beauty-system release-set preparation](https://github.com/rpwagner/beauty-runtime/issues/281)
 supplies this guard only after explicit approval of an exact set; orchestration
 is owned outside this repository. Publication remains in these existing workflows.
+
+## Upgrade and recovery handoff
+
+For a change with upgrade consequences, record package/platform compatibility,
+caller configuration, vault/master-key and locking implications, migration,
+consumer activation, regression evidence, and recovery in its issue/PR. Identify
+the owning consumer or deployment mechanism and any transition it cannot yet
+express; this document does not introduce coordinated deployment or signaling.
+
+Recovery requires the prior known-good tagged artifact and compatible
+caller-selected configuration, vault state, and master-key access. Installing an
+older wheel alone cannot reverse an incompatible stored-format or credential
+change. Credential rotation and migration need their own reviewed authorization;
+never overwrite a real vault to obtain validation evidence.
