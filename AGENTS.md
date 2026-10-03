@@ -2,6 +2,18 @@
 
 credential-vault is a small standalone Python package for portable encrypted credential storage and reusable Globus token lifecycle behavior. It is intentionally designed to be easy for both people and coding models to understand and extend methodically.
 
+## Beauty-system policy applicability
+
+Before substantive work on Credential Vault within the coupled Beauty system,
+read and apply the current [canonical Beauty-system policy](https://github.com/rpwagner/beauty-runtime/blob/main/AGENTS.md).
+Follow its applicability and design/implementation distinctions, including its
+release-stage and branch/PR-readiness guidance. Reference that source rather
+than copying a second general policy here. Local architecture, security,
+validation, and release requirements remain owned here; the reference creates
+no runtime dependency or application authority. Report an unavailable source
+or unresolved local/upstream conflict rather than reconstructing the policy
+or silently choosing precedence.
+
 ## Architecture boundary
 
 This package owns:
@@ -54,6 +66,7 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 - Make routine implementation decisions within the documented boundaries. Adding a small helper or focused test is not itself a reason to stop.
 - Run the normal validation before considering the work complete.
 - Submit completed work through a pull request to `main`.
+- Apply the canonical PR-readiness criteria: preserve incomplete or blocked work in a draft PR, but pending post-release/live `v0.x` evaluation alone does not retain draft status after required pre-merge validation and design/contract blockers are resolved.
 - In the pull request, summarize the changes, validation actually performed, and remaining limitations. Distinguish mocked/offline tests from live-platform validation.
 - Changes to `main` should occur through pull requests after bootstrap.
 - Do not merge a pull request unless explicitly instructed.
