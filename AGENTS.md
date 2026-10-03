@@ -14,6 +14,11 @@ no runtime dependency or application authority. Report an unavailable source
 or unresolved local/upstream conflict rather than reconstructing the policy
 or silently choosing precedence.
 
+Use that source's discovery/reuse, visible architectural costs, bounded cleanup,
+durable issue records, regression evidence, and upgrade-completeness rules.
+During design, `ARCHITECTURE.md` is evidence for alternatives; during
+implementation, its contracts and the adopted issue constrain changes.
+
 ## Architecture boundary
 
 This package owns:
@@ -37,11 +42,9 @@ This package does not own:
 
 Consumers may depend on credential-vault. credential-vault must not depend on application packages.
 
-## Development rules
+## Local implementation requirements
 
-- Prefer less code when it produces a simpler maintainable system.
-- Do not rebuild functionality that Python, an existing dependency, keyring, keyrings.cryptfile, or globus-sdk already provides adequately.
-- Before adding a dependency, follow `skills/dependency-evaluation/SKILL.md` and record the reasoning in the issue or pull request.
+- Use `skills/dependency-evaluation/SKILL.md` during discovery/design and before adding dependencies or replacing an existing mechanism; record the local decision in the issue or pull request.
 - Prefer the latest stable supported Python release and latest stable direct dependency releases. Keep them reasonably current unless a documented compatibility, stability, or security reason justifies holding a version back.
 - Keep runtime dependencies minimal. Test/build tools belong in the test extra.
 - Keep secrets out of source code, configuration files, logs, exceptions, object representations, command arguments, and test fixtures committed to Git.
@@ -49,7 +52,7 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 - Use globus-sdk for Globus authentication, token validation, refresh, and token data types rather than reimplementing OAuth.
 - Keep application-specific defaults and policy in consuming applications.
 - Treat GitHub security features such as CodeQL/code scanning as conditional on the repository's current plan and visibility. Enable them when supported; if unavailable, record the limitation and continue. Do not change repository visibility or subscription level solely to enable them.
-- Implement only the issue being worked on. Do not implement anticipated future features.
+- Follow the adopted issue and canonical bounded-cleanup rules; do not implement anticipated future features. Preserve concrete broader findings in the authorized work record or a focused follow-up.
 - Add or update tests with behavior changes.
 - Keep modules focused on one responsibility and avoid unnecessary nesting.
 
@@ -118,9 +121,14 @@ Update AGENTS.md and/or ARCHITECTURE.md in the same pull request when a change a
 
 Before ending a development thread, make the GitHub branch/PR state current, record validation and unresolved risks, link the relevant GitHub artifacts, and state the exact next action so another thread can resume from GitHub rather than from chat memory.
 
-## Stop conditions
+## Implementation stop conditions
 
-Stop and request architectural review instead of improvising when a change:
+During implementation, stop and request architectural review for an unresolved
+change below unless the adopted issue explicitly authorizes it. During design,
+discuss alternatives with visible impacts and costs under the canonical policy;
+security and publication approvals still apply.
+
+The review boundaries are changes that:
 - introduces a new architectural layer;
 - requires a new external runtime dependency;
 - changes a public interface beyond the active issue;

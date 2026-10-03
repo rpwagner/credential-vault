@@ -1,15 +1,16 @@
 ---
 name: dependency-evaluation
-description: Evaluate whether Python functionality should use the standard library, an existing dependency, a new external dependency, or local code. Use before adding a dependency or reimplementing functionality already available elsewhere.
+description: Evaluate configuration, integration, extension, dependencies, and local code for Credential Vault during design and before adding a dependency or rebuilding existing functionality.
 ---
 
 # Dependency Evaluation
 
-Prefer the smallest maintainable solution, not automatically the fewest dependencies or the fewest local lines.
+Read `AGENTS.md` for policy applicability, stage distinctions, and local review
+boundaries. Keep this as the repository's focused decision procedure.
 
 1. State the capability needed in one sentence.
-2. Check, in order: Python standard library, dependencies already installed by this project, then external packages.
-3. If considering a new dependency, compare it with a local implementation using concrete evidence where practical.
+2. During design, inspect current package/consumer capabilities and configuration, Python standard facilities, existing dependencies, maintained clients/packages, supported SDK integrations, and upstream extension points. Investigate in proportion to uncertainty and consequence, not through an exhaustive checklist for known mechanisms.
+3. Compare practical configuration, integration, extension, dependency, and local-code options using concrete evidence where useful. Preserve keyrings.cryptfile ownership of encryption/file formats and globus-sdk ownership of supported OAuth/token behavior.
 4. Consider maintenance activity, security and supply-chain exposure, transitive dependency weight, license, API stability, replaceability, platform support, and how specialized or error-prone the local implementation would be.
 5. Prefer a maintained dependency when local code would reproduce specialized, security-sensitive, protocol-sensitive, or compatibility-heavy behavior.
 6. Prefer local code when the needed behavior is small, stable, easy to test, and the dependency creates comparable or greater long-term burden.
@@ -21,9 +22,14 @@ Record the decision briefly:
 - Existing solution checked
 - Candidate dependency, if any
 - Local implementation alternative
-- Dependency risks and costs
+- Dependency/integration risks and costs, including affected contracts, effort, platform compatibility, migration/deployment, and ownership
 - Local-code risks and costs
 - Decision
-- Evidence
+- Evidence and what would reopen the decision
 
-If the evidence is insufficient or the choice would materially change the repository architecture, stop and request architectural review.
+Reuse an existing decision record where it still applies. During design, expose
+material architectural alternatives and their costs rather than treating current
+architecture as fixed. During implementation, stop for an unresolved contract
+conflict or material change not authorized by the adopted issue. If evidence is
+insufficient, identify the smallest useful experiment or decision. Neither stage
+authorizes changing credentials, scopes, persistence, locking, or publication.
