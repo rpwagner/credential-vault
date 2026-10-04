@@ -1,35 +1,29 @@
 ---
 name: dependency-evaluation
-description: Evaluate configuration, integration, extension, dependencies, and local code for Credential Vault during design and before adding a dependency or rebuilding existing functionality.
+description: Discover existing solutions before designing a mechanism or selecting a dependency for Credential Vault; apply the canonical procedure with local security and ownership checks.
 ---
 
 # Dependency Evaluation
 
-Read `AGENTS.md` for policy applicability, stage distinctions, and local review
-boundaries. Keep this as the repository's focused decision procedure.
+Read [local policy applicability](../../AGENTS.md#beauty-system-policy-applicability)
+and use the current canonical
+[discovery/decision procedure](https://github.com/rpwagner/beauty-runtime/blob/main/skills/dependency-evaluation/SKILL.md).
+Actively discover solutions before a new mechanism is designed, including when
+no dependency has been named. Look beyond installed packages without waiting
+for the operator to suggest one. Keep investigation proportionate and reuse its
+existing decision evidence; do not maintain a second general checklist here.
+Report unavailable sources or unresolved local/upstream conflicts.
 
-1. State the capability needed in one sentence.
-2. During design, inspect current package/consumer capabilities and configuration, Python standard facilities, existing dependencies, maintained clients/packages, supported SDK integrations, and upstream extension points. Investigate in proportion to uncertainty and consequence, not through an exhaustive checklist for known mechanisms.
-3. Compare practical configuration, integration, extension, dependency, and local-code options using concrete evidence where useful. Preserve keyrings.cryptfile ownership of encryption/file formats and globus-sdk ownership of supported OAuth/token behavior.
-4. Consider maintenance activity, security and supply-chain exposure, transitive dependency weight, license, API stability, replaceability, platform support, and how specialized or error-prone the local implementation would be.
-5. Prefer a maintained dependency when local code would reproduce specialized, security-sensitive, protocol-sensitive, or compatibility-heavy behavior.
-6. Prefer local code when the needed behavior is small, stable, easy to test, and the dependency creates comparable or greater long-term burden.
-7. Do not add a dependency merely for convenience when existing project code or the standard library already solves the problem adequately.
+## Local ownership and review
 
-Record the decision briefly:
+Use [ARCHITECTURE.md](../../ARCHITECTURE.md) for package boundaries. Preserve
+keyring/keyrings.cryptfile ownership of encryption and file formats, and
+Globus SDK ownership of authentication and token lifecycle behavior. Inspect
+those maintained interfaces before proposing local substitutes.
 
-- Capability needed
-- Existing solution checked
-- Candidate dependency, if any
-- Local implementation alternative
-- Dependency/integration risks and costs, including affected contracts, effort, platform compatibility, migration/deployment, and ownership
-- Local-code risks and costs
-- Decision
-- Evidence and what would reopen the decision
-
-Reuse an existing decision record where it still applies. During design, expose
-material architectural alternatives and their costs rather than treating current
-architecture as fixed. During implementation, stop for an unresolved contract
-conflict or material change not authorized by the adopted issue. If evidence is
-insufficient, identify the smallest useful experiment or decision. Neither stage
-authorizes changing credentials, scopes, persistence, locking, or publication.
+Keep application paths, credential identities, scopes and authorization in the
+consumer. Evaluate compatibility with the supported Python/POSIX platforms and
+the vault persistence, finite locking and redacted-error contracts. Apply the
+local implementation review boundaries in
+[AGENTS.md](../../AGENTS.md#implementation-stop-conditions); discovery or design
+discussion grants no credential, stored-state, locking or publication authority.
