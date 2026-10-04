@@ -40,6 +40,33 @@ is owned outside this repository. Publication remains in these existing workflow
 
 ## Upgrade and recovery handoff
 
+The wheel and source distribution include `credential_vault/tools/post.py`.
+The [common installed post contract](https://github.com/rpwagner/beauty-runtime/blob/main/docs/interface-contracts.md#installed-package-owned-post-script)
+owns discovery, bounded JSON context/results and invocation with the intended
+environment's Python (`-I -B`), outside a checkout. Deployment coordinates this
+explicit step after package installation; pip, builds and imports do not run it.
+
+For this release there is **no migration**. With empty owner intent the step
+reports successful `unchanged` without requiring a vault or master key. Install,
+upgrade, downgrade, reinstall, retry and explicitly authorized recovery use
+the same no-op. Unsupported owner intent fails without touching state; it does
+not request initialization, replacement, rotation or token refresh. This says
+nothing about reversing state changes made by other releases or consumers.
+
+CI and release packaging smoke-test both clean wheel and sdist installations,
+including RECORD-bound discovery and repeated installed invocation:
+
+```bash
+/absolute/clean-environment/bin/python -I -B tools/check_installed_post.py
+```
+
+The checker runs the installed script in a disposable directory and verifies no
+state creation. Offline safety tests additionally forbid credential imports,
+filesystem access, locking, subprocesses and network calls during post execution.
+Supported-host integration with Maintainer remains separate evaluation evidence.
+Releases predating this script retain the recovery procedure below; absence of
+a script in an old artifact must not be reported as a successful post step.
+
 For a change with upgrade consequences, record package/platform compatibility,
 caller configuration, vault/master-key and locking implications, migration,
 consumer activation, regression evidence, and recovery in its issue/PR. Identify

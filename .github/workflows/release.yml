@@ -203,11 +203,13 @@ jobs:
           python -m venv "${RUNNER_TEMP}/wheel-smoke"
           "${RUNNER_TEMP}/wheel-smoke/bin/python" -m pip install dist/*.whl
           "${RUNNER_TEMP}/wheel-smoke/bin/python" -I -c "from importlib.metadata import version; import credential_vault; assert version('credential-vault')"
+          "${RUNNER_TEMP}/wheel-smoke/bin/python" -I -B tools/check_installed_post.py
       - name: Install and smoke-test source distribution
         run: |
           python -m venv "${RUNNER_TEMP}/sdist-smoke"
           "${RUNNER_TEMP}/sdist-smoke/bin/python" -m pip install dist/*.tar.gz
           "${RUNNER_TEMP}/sdist-smoke/bin/python" -I -c "from importlib.metadata import version; import credential_vault; assert version('credential-vault')"
+          "${RUNNER_TEMP}/sdist-smoke/bin/python" -I -B tools/check_installed_post.py
       - name: Prepare release distributions
         run: |
           cd dist

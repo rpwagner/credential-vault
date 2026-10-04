@@ -92,6 +92,23 @@ The vault protects stored credential values at rest when its master key is prote
 
 It does not hide credentials from a process authorized to open the vault, provide application authorization, provide a network isolation boundary, protect against a compromised process holding the master key, or control what a caller does with a returned credential.
 
+## Package-owned deployment step
+
+The distribution ships one `credential_vault/tools/post.py`. It is invoked as
+an installed file through the [common post contract](https://github.com/rpwagner/beauty-runtime/blob/main/docs/interface-contracts.md#installed-package-owned-post-script),
+separately from installation, build and import, without a Maintainer dependency.
+The current release has no package-owned state transition: empty owner intent
+returns `unchanged` in either managed environment, including non-reconciling
+copies, retries and recovery. Unsupported intent or invocation routing fails
+with a fixed diagnostic before any state access.
+
+The script does not import the credential APIs, discover caller vaults, open
+keys/locks, validate credentials, or perform authentication/service actions.
+Consumers retain all paths, identities and authority. The presence of this
+transitive package and its script does not create an environment root or a
+credential service. Future format/locking transitions require a separately
+reviewed decision; none is implemented here.
+
 ## Supported runtime
 
 The initial supported runtime is Python 3.14 on macOS and Linux/POSIX.
