@@ -93,7 +93,7 @@ No scheduler or daemon is required for correctness. A future scheduled consumer 
 
 ## Platform support
 
-Python 3.13 and 3.14 are supported on macOS and Linux/other POSIX hosts. Vault operations fail clearly on Windows because this release requires POSIX `fcntl` locking.
+Python 3.14 is supported on macOS and Linux/other POSIX hosts. Vault operations fail clearly on Windows because this release requires POSIX `fcntl` locking.
 
 ## Development
 

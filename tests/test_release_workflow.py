@@ -21,7 +21,10 @@ def test_release_commits_version_and_keeps_approval() -> None:
 def test_release_keeps_platform_and_distribution_coverage() -> None:
     assert "ubuntu-latest" in RELEASE
     assert "macos-latest" in RELEASE
-    assert 'python-version: "3.13"' in RELEASE
+    assert 'python-version: "3.13"' not in RELEASE
+    assert 'python-version: "3.13"' not in CI
+    assert "matrix.python-version" not in RELEASE
+    assert "matrix.python-version" not in CI
     assert 'python-version: "3.14"' in RELEASE
     assert "Install and smoke-test wheel" in RELEASE
     assert "Install and smoke-test source distribution" in RELEASE
