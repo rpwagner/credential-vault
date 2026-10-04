@@ -77,7 +77,7 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 
 ## Supported runtime
 
-The initial package target is Python 3.13 and 3.14 on POSIX hosts. macOS and Linux are the required platforms for the first release.
+The package target is Python 3.14 on POSIX hosts. Do not carry support for an older interpreter without a concrete application or dependency requirement. macOS and Linux are the required platforms for the first release.
 
 Windows support requires an explicit locking design decision; do not silently weaken the POSIX advisory-lock contract.
 
