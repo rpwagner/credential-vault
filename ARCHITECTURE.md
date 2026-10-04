@@ -94,6 +94,6 @@ It does not hide credentials from a process authorized to open the vault, provid
 
 ## Supported runtime
 
-The initial supported runtime is Python 3.13 and 3.14 on macOS and Linux/POSIX.
+The initial supported runtime is Python 3.14 on macOS and Linux/POSIX.
 
 Windows support requires a separate locking design decision and is not part of the first release.

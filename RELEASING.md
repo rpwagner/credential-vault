@@ -17,7 +17,7 @@ The Release job needs permission to push its version-only commit to `main`. If a
 
 1. Merge reviewed feature and fix changes to `main` and confirm its normal push CI is green.
 2. Open **Actions -> Release -> Run workflow**, select `main`, and enter `version: X.Y.Z`.
-3. The workflow validates the PEP 440 version and starting CI, commits `chore: release vX.Y.Z [skip ci]` on `main`, runs Linux Python 3.13/3.14 and macOS Python 3.14 tests, builds and smoke-tests the wheel and sdist, and generates `SHA256SUMS`.
+3. The workflow validates the PEP 440 version and starting CI, commits `chore: release vX.Y.Z [skip ci]` on `main`, runs Linux and macOS Python 3.14 tests, builds and smoke-tests the wheel and sdist, and generates `SHA256SUMS`.
 4. Approve the pending `release` environment deployment. After validation and approval the workflow makes an immutable annotated tag on the exact release commit and creates or repairs the GitHub Release with the validated assets.
 
 The version-only commit skips redundant normal CI because the release workflow validates its exact SHA. If a run fails after the commit, rerun with the same version while that commit remains current `main`; the workflow reuses it. If `main` moves, the retry stops. An existing tag is accepted only if it points to that same commit and is never moved.
