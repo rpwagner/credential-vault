@@ -92,6 +92,10 @@ The normal development loop is:
 
 Before release, also build wheel and source distributions, install each into a clean environment, and smoke-test the public package import.
 
+Prepare the reviewed fork package source using the documented
+`RELEASING.md#reviewed-cryptfile-package-source` procedure before this loop.
+CI and release validation reuse `.github/actions/package-source` for this
+preparation. Do not use an unrestricted PyPI extra index as proof of fork identity.
 The repository should not require a model or developer to discover additional routine installation steps.
 
 ## Releases
