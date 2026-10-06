@@ -1,7 +1,5 @@
 """Offline wheel/sdist smoke check, run with the clean installation's Python."""
 
-import base64
-import hashlib
 from importlib.metadata import distribution
 import json
 from pathlib import Path
@@ -12,16 +10,10 @@ import tempfile
 
 def main() -> None:
     installed = distribution("credential-vault")
-    matches = [file for file in installed.files or ()
-               if str(file).endswith("/tools/post.py")]
-    assert len(matches) == 1, "one installed post script is required"
-    file = matches[0]
-    script = Path(file.locate()).absolute()
-    assert not script.is_symlink()
-    assert script.resolve().is_relative_to(Path(sys.prefix).resolve())
-    digest = base64.urlsafe_b64encode(hashlib.sha256(script.read_bytes()).digest()).decode().rstrip("=")
-    assert file.hash is not None and file.hash.mode == "sha256"
-    assert file.hash.value == digest, "installed post script must match RECORD"
+    posts = [entry for entry in installed.entry_points if entry.group == "beauty.post"]
+    assert [(entry.name, entry.value) for entry in posts] == [
+        ("credential-vault", "credential_vault.tools.post:main")
+    ], "one installed post entry point is required"
     with tempfile.TemporaryDirectory() as directory:
         context = {
             "contract_version": 1,
@@ -37,8 +29,14 @@ def main() -> None:
         }
         for prior_version, reconcile in ((None, True), (installed.version, False)):
             context.update(prior_version=prior_version, reconcile=reconcile)
+            runner = (
+                "from importlib.metadata import distribution; import sys; "
+                "e=[e for e in distribution('credential-vault').entry_points "
+                "if e.group=='beauty.post' and e.name=='credential-vault']; "
+                "raise SystemExit(e[0].load()())"
+            )
             result = subprocess.run(
-                [sys.executable, "-I", "-B", str(script)],
+                [sys.executable, "-I", "-B", "-c", runner],
                 input=json.dumps(context), text=True, capture_output=True,
                 cwd=directory, timeout=10, check=True,
             )
@@ -48,7 +46,7 @@ def main() -> None:
                 "message": "no package-owned state reconciliation required",
             }
         assert list(Path(directory).iterdir()) == [], "post must create no state"
-    print(f"{installed.metadata['Name']} {installed.version}: installed post check passed")
+    print(f"{installed.metadata['Name']} {installed.version}: installed post entry-point check passed")
 
 
 if __name__ == "__main__":

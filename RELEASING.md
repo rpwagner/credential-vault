@@ -40,7 +40,8 @@ is owned outside this repository. Publication remains in these existing workflow
 
 ## Upgrade and recovery handoff
 
-The wheel and source distribution include `credential_vault/tools/post.py`.
+The wheel and source distribution expose the `credential-vault` entry in the
+`beauty.post` group, targeting `credential_vault.tools.post:main`.
 The [common installed post contract](https://github.com/rpwagner/beauty-runtime/blob/main/docs/interface-contracts.md#installed-package-owned-post-script)
 owns discovery, bounded JSON context/results and invocation with the intended
 environment's Python (`-I -B`), outside a checkout. Deployment coordinates this
@@ -54,13 +55,13 @@ not request initialization, replacement, rotation or token refresh. This says
 nothing about reversing state changes made by other releases or consumers.
 
 CI and release packaging smoke-test both clean wheel and sdist installations,
-including RECORD-bound discovery and repeated installed invocation:
+including entry-point discovery and repeated installed invocation:
 
 ```bash
 /absolute/clean-environment/bin/python -I -B tools/check_installed_post.py
 ```
 
-The checker runs the installed script in a disposable directory and verifies no
+The checker loads the installed entry point in a disposable directory and verifies no
 state creation. Offline safety tests additionally forbid credential imports,
 filesystem access, locking, subprocesses and network calls during post execution.
 Supported-host integration with Maintainer remains separate evaluation evidence.
