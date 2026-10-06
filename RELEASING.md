@@ -40,7 +40,8 @@ is owned outside this repository. Publication remains in these existing workflow
 
 ## Upgrade and recovery handoff
 
-The wheel and source distribution include `credential_vault/tools/post.py`.
+The wheel and source distribution expose the `credential-vault` entry in the
+`beauty.post` group, targeting `credential_vault.tools.post`.
 The [common installed post contract](https://github.com/rpwagner/beauty-runtime/blob/main/docs/interface-contracts.md#installed-package-owned-post-script)
 owns discovery, bounded JSON context/results and invocation with the intended
 environment's Python (`-I -B`), outside a checkout. Deployment coordinates this
