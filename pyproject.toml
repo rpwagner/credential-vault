@@ -24,7 +24,7 @@ test = [
 ]
 
 [project.entry-points."beauty.post"]
-credential-vault = "credential_vault.tools.post"
+credential-vault = "credential_vault.tools.post:main"
 
 [project.urls]
 Repository = "https://github.com/rpwagner/credential-vault"
