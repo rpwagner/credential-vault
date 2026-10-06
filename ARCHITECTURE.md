@@ -95,7 +95,7 @@ It does not hide credentials from a process authorized to open the vault, provid
 ## Package-owned deployment step
 
 The distribution exposes one `beauty.post` entry point named
-`credential-vault`, targeting `credential_vault.tools.post`. It is invoked
+`credential-vault`, targeting `credential_vault.tools.post:main`. It is invoked
 through the [common post contract](https://github.com/rpwagner/beauty-runtime/blob/main/docs/interface-contracts.md#installed-package-owned-post-script),
 separately from installation, build and import, without a Maintainer dependency.
 The current release has no package-owned state transition: empty owner intent
