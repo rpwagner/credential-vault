@@ -19,6 +19,14 @@ credential-vault
 
 Consumers may depend on credential-vault. credential-vault must not import or depend on application packages.
 
+`keyrings.cryptfile==1.5.0` selects the reviewed maintained fork version.
+Package-source preparation mirrors its unchanged release wheel into a normal
+Simple Index before pip runs; neither package installation nor Vault imports
+download GitHub assets. The requirement alone does not bind an index or hash.
+The source and artifact verification contract is documented in
+`RELEASING.md` and `tools/cryptfile-source.json`; runtime code has no dependency
+on mirroring tools or deployment orchestration.
+
 ## Responsibilities
 
 credential-vault owns:

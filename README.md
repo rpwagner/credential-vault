@@ -99,6 +99,18 @@ Python 3.14 is supported on macOS and Linux/other POSIX hosts. Vault operations 
 
 Read `AGENTS.md` and `ARCHITECTURE.md` before changing the repository.
 
+### Package sources
+
+The dependency is the maintained `rpwagner/keyrings.cryptfile` **1.5.0** wheel,
+unchanged from its reviewed release. It is expressed as an ordinary package
+requirement; pip does not download a GitHub release URL from Vault metadata.
+The source must be prepared before installation. See
+[the package-source procedure](RELEASING.md#reviewed-cryptfile-package-source)
+for mirroring, the reviewed artifact identity, and pip's multiple-index limitation.
+An unrestricted PyPI extra index is not a fork identity guarantee.
+
+After preparing those sources, normal validation is:
+
 Normal validation:
 
 ```bash

@@ -1,0 +1,13 @@
+{
+  "repository": "rpwagner/keyrings.cryptfile",
+  "tag": "v1.5.0",
+  "tag_object": "dbe0a94a4d48edfa12a060b5fb4df0eed8a3b15b",
+  "commit": "02b4c0d49287cb21324a48606050929aa99ab3ab",
+  "release_id": 392168237,
+  "asset_id": 575235535,
+  "filename": "keyrings_cryptfile-1.5.0-py3-none-any.whl",
+  "name": "keyrings.cryptfile",
+  "version": "1.5.0",
+  "size": 22631,
+  "sha256": "4e0c3cf7fffae0c1f912035babded2671ad6d542e1a3f8f40b806635ee9762c0"
+}
