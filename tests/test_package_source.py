@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pytest
+from packaging.requirements import Requirement
 
 
 ROOT = Path(__file__).parents[1]
@@ -33,7 +34,7 @@ def test_ordinary_requirement_has_no_release_url():
     requirements = distribution("credential-vault").requires
     cryptfile = [value for value in requirements if value.startswith("keyrings.cryptfile")]
     assert cryptfile == ["keyrings.cryptfile==1.5.0"]
-    assert not any("github.com" in value for value in requirements)
+    assert all(Requirement(value).url is None for value in requirements)
 
 
 def test_reviewed_mirror_and_report(mirror, tmp_path):

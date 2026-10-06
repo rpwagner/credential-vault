@@ -20,6 +20,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
   "build>=1.2",
+  "packaging>=23",
   "pytest>=8",
 ]
 
