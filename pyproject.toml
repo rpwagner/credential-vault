@@ -5,13 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "credential-vault"
 version = "0.2.1"
-description = "Portable encrypted credential vault with reusable Globus token lifecycle"
+description = "Portable encrypted credential vault with reusable OAuth/OIDC and Globus token lifecycles"
 readme = "README.md"
 requires-python = ">=3.14"
 classifiers = ["Programming Language :: Python :: 3.14"]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 dependencies = [
+  "authlib>=1.8,<2",
+  "joserfc>=1.7.5,<2",
+  "requests>=2.34.2,<3",
   "globus-sdk>=4.9,<5",
   "keyring>=25",
   "keyrings.cryptfile==1.5.0",

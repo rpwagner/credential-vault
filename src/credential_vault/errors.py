@@ -22,8 +22,12 @@ class UnsupportedPlatformError(VaultUnavailable):
 
 
 class ReauthenticationRequired(CredentialError):
-    """Stored Globus authorization can no longer produce a usable token."""
+    """Stored user authorization can no longer produce a usable token."""
 
 
 class GlobusAuthenticationError(CredentialError):
     """Globus authentication failed without exposing dependency details."""
+
+
+class OAuthAuthenticationError(CredentialError):
+    """OAuth/OIDC authentication failed without exposing dependency details."""
