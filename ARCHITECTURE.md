@@ -1,6 +1,6 @@
 # credential-vault architecture
 
-credential-vault is a small reusable Python package for encrypted credential persistence and Globus token lifecycle mechanics.
+credential-vault is a small reusable Python package for encrypted credential persistence and OAuth/OIDC and Globus token lifecycle mechanics.
 
 It is intentionally independent of applications which consume credentials.
 
@@ -15,6 +15,8 @@ credential-vault
         +-- keyring
         +-- keyrings.cryptfile
         +-- globus-sdk
+        +-- Authlib / joserfc
+        +-- requests
 ```
 
 Consumers may depend on credential-vault. credential-vault must not import or depend on application packages.
@@ -39,6 +41,8 @@ credential-vault owns:
 - opaque static-secret get/set/delete operations;
 - a Globus SDK `TokenStorage` adapter backed by the encrypted vault;
 - reusable Globus token lookup, SDK refresh persistence, and explicit login composition;
+- Authlib-backed generic OAuth/OIDC authorization-code login and on-demand refresh;
+- a temporary loopback callback listener for explicit desktop login;
 - redacted storage/authentication errors.
 
 The package does not own:
@@ -66,6 +70,7 @@ encrypted vault file
         |
         +-- opaque static secrets
         +-- serialized Globus SDK token records
+        +-- generic OAuth token records and validated OIDC login context
 ```
 
 The package never relies on Python's process-global keyring backend for composition. The master-key provider and encrypted backend are explicit objects.
@@ -80,7 +85,10 @@ The first release targets POSIX hosts. Cooperating processes serialize vault ope
 <vault-path>.lock
 ```
 
-The lock covers complete-file keyring operations and may be held across Globus SDK read, validation, refresh, and persistence.
+The lock covers complete-file keyring operations and covers generic OAuth read, refresh, validation and replacement persistence,
+and may be held across the same Globus SDK operations. Interactive browser
+authorization happens before acquiring the lock; code exchange and persistence
+happen under the lock.
 
 This is cooperative process serialization. It does not claim crash-atomic persistence stronger than the selected `keyrings.cryptfile` backend provides.
 
@@ -93,6 +101,53 @@ The package adapts the encrypted vault to the SDK `TokenStorage` contract and co
 Runtime token lookup never silently starts interactive login. Login is an explicit caller operation.
 
 The package does not calculate OAuth expiration or implement refresh-token protocol behavior itself.
+
+## Generic OAuth/OIDC lifecycle
+
+`OAuthClientConfig` holds caller-selected public configuration. The caller supplies
+an expected issuer for RFC 8414 / OIDC discovery, or direct HTTPS endpoints.
+`OAuthTokenManager` composes Authlib's `OAuth2Session` for authorization code,
+S256 PKCE, token endpoint authentication, expiry normalization and refresh.
+Confidential clients obtain their secret from a caller-supplied callable at use
+time; no client secret is placed in the configuration object or persisted here.
+
+Public clients require PKCE. Confidential clients support Authlib's standard
+`client_secret_basic` and `client_secret_post` methods and may disable PKCE when
+required by their registration. Trusted callers may configure Authlib compliance
+hooks for nonstandard envelopes. Hooks do not grant additional authority.
+
+Login is explicit. A trusted caller handler can accept an authorization URL and
+return the callback URL, or the package binds a temporary IPv4/IPv6 loopback
+listener before opening the system browser. Authlib verifies state and exchanges
+the code. The transport has finite waits, fixed browser responses, no request
+logging and no long-running service. No codes/verifiers are returned or persisted.
+
+Optional OIDC uses Authlib metadata and `CodeIDToken` validators and joserfc for
+JWKS signature verification with a caller-selected asymmetric algorithm allowlist.
+Issuer, audience, time, nonce and access-token hash checks remain library-owned.
+The encrypted record retains the validated subject and original nonce to check
+new refresh ID tokens. Refresh may omit a new ID token or its nonce; an included
+nonce must match the login, and the subject must remain unchanged. Claims and raw
+token records are not a public convenience API; identity mapping remains outside.
+Metadata/JWKS use separate unauthenticated HTTPS transport without redirects or
+implicit netrc credentials; token POSTs also prohibit redirects.
+
+Generic records occupy the separate `credential-vault/oauth-tokens` keyring
+service with caller-selected namespaces. They replace the full normalized token
+response rather than merge stale fields. Authlib retains the existing refresh
+token when the server omits a replacement and replaces it when one is supplied.
+Cached lookups do not require discovery or a client secret. The caller must use
+separate namespaces for different clients/accounts/issuers and must not reuse a
+namespace after changing its authorization configuration without explicit login.
+
+No vault format, master-key or locking migration is introduced. The existing
+`beauty.post` contract remains unchanged: token state is created by explicit
+caller-authorized login in an already initialized caller-owned vault. Deployment
+must not discover vaults, authorize APIs or create credential state. Existing
+Globus records and behavior are unchanged. An older installation simply does not
+consume generic records; upgrade/reinstall/recovery preserves the encrypted file.
+A crash/storage failure after a one-use refresh has been consumed can require
+explicit login; no stronger crash atomicity or recovery guarantee is claimed.
 
 ## Security boundary
 

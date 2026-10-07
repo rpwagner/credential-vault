@@ -1,6 +1,6 @@
 # Repository purpose
 
-credential-vault is a small standalone Python package for portable encrypted credential storage and reusable Globus token lifecycle behavior. It is intentionally designed to be easy for both people and coding models to understand and extend methodically.
+credential-vault is a small standalone Python package for portable encrypted credential storage and reusable OAuth/OIDC and Globus token lifecycle behavior. It is intentionally designed to be easy for both people and coding models to understand and extend methodically.
 
 ## Beauty-system policy applicability
 
@@ -28,6 +28,8 @@ This package owns:
 - opaque static-secret get/set/delete behavior;
 - a Globus SDK `TokenStorage` adapter;
 - reusable Globus token validation, refresh, and explicit login composition;
+- Authlib-backed OAuth 2.0 authorization-code/PKCE, refresh, metadata discovery,
+  and optional OIDC validation, with explicit login and temporary loopback transport;
 - redacted package-defined credential errors.
 
 This package does not own:
@@ -38,7 +40,8 @@ This package does not own:
 - network credential services or brokers;
 - background scheduling;
 - application-specific paths, credential identities, OAuth clients, scopes, or resources;
-- generalized OAuth behavior beyond explicitly supported SDK integrations.
+- OAuth grants beyond authorization code and refresh, provider-specific API wrappers,
+  or caller identity mapping/authorization decisions.
 
 Consumers may depend on credential-vault. credential-vault must not depend on application packages.
 
@@ -50,6 +53,9 @@ Consumers may depend on credential-vault. credential-vault must not depend on ap
 - Keep secrets out of source code, configuration files, logs, exceptions, object representations, command arguments, and test fixtures committed to Git.
 - Use keyring interfaces and keyrings.cryptfile for encrypted vault persistence; do not copy or reimplement its cryptographic/file-format internals.
 - Use globus-sdk for Globus authentication, token validation, refresh, and token data types rather than reimplementing OAuth.
+- Use Authlib and its maintained JOSE dependency for generic OAuth/OIDC protocol,
+  expiry, refresh, metadata and ID-token validation. Keep provider quirks in
+  caller-owned Authlib compliance hooks; never create provider token managers.
 - Keep application-specific defaults and policy in consuming applications.
 - Treat GitHub security features such as CodeQL/code scanning as conditional on the repository's current plan and visibility. Enable them when supported; if unavailable, record the limitation and continue. Do not change repository visibility or subscription level solely to enable them.
 - Follow the adopted issue and canonical bounded-cleanup rules; do not implement anticipated future features. Preserve concrete broader findings in the authorized work record or a focused follow-up.
