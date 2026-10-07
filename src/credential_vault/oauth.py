@@ -166,7 +166,10 @@ class OAuthTokenManager:
             return value
 
     def _session(self, metadata, *, token=None, redirect_uri=None) -> OAuth2Session:
-        secret = self.client_secret_provider() if self.client_secret_provider else None
+        try:
+            secret = self.client_secret_provider() if self.client_secret_provider else None
+        except Exception:
+            raise OAuthAuthenticationError("OAuth client secret is unavailable") from None
         if self.client_secret_provider and (not isinstance(secret, str) or not secret):
             raise OAuthAuthenticationError("OAuth client secret is unavailable")
         session = OAuth2Session(
@@ -267,7 +270,10 @@ class OAuthTokenManager:
                     raise ReauthenticationRequired("OAuth credential requires explicit login")
                 metadata = self._metadata()
                 with self._session(metadata, token=record["token"]) as session:
-                    token = session.refresh_token(metadata["token_endpoint"], allow_redirects=False)
+                    try:
+                        token = session.refresh_token(metadata["token_endpoint"], allow_redirects=False)
+                    except CredentialError:
+                        raise OAuthAuthenticationError("OAuth refresh hook failed") from None
                     self._validate_token(token)
                     if token.is_expired(leeway=self.config.leeway):
                         raise ReauthenticationRequired("OAuth credential requires explicit login")
@@ -326,15 +332,21 @@ class OAuthTokenManager:
             url, state = session.create_authorization_url(
                 metadata["authorization_endpoint"], code_verifier=verifier, **parameters)
             session.state = state
-            response = handler(url)
+            try:
+                response = handler(url)
+            except Exception:
+                raise OAuthAuthenticationError("OAuth authorization callback failed") from None
             expected, actual = urlsplit(redirect_uri), urlsplit(response)
             if ((expected.scheme, expected.netloc, expected.path) !=
                     (actual.scheme, actual.netloc, actual.path) or actual.fragment):
                 raise OAuthAuthenticationError("OAuth callback did not match redirect URI")
             with self.vault.locked():
-                token = session.fetch_token(
-                    metadata["token_endpoint"], authorization_response=response,
-                    code_verifier=verifier, grant_type="authorization_code", allow_redirects=False)
+                try:
+                    token = session.fetch_token(
+                        metadata["token_endpoint"], authorization_response=response,
+                        code_verifier=verifier, grant_type="authorization_code", allow_redirects=False)
+                except CredentialError:
+                    raise OAuthAuthenticationError("OAuth token hook failed") from None
                 self._validate_token(token)
                 if token.is_expired(leeway=self.config.leeway):
                     raise ReauthenticationRequired("OAuth login did not establish a usable token")

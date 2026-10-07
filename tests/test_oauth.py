@@ -548,3 +548,28 @@ def test_authorization_parameters_cannot_override_protocol_fields(initialized_va
         manager(vault).login(authorization_handler=handler,
                              authorization_parameters={field: "synthetic-value"})
     assert transport[0] == []
+
+
+@pytest.mark.parametrize("source", ["secret_provider", "authorization_handler", "token_hook"])
+def test_caller_callback_errors_are_redacted_even_if_package_error(initialized_vault, transport, source):
+    vault, _, _ = initialized_vault
+
+    def fail(*args, **kwargs):
+        raise VaultUnavailable("synthetic-client-secret-exposed")
+
+    if source == "secret_provider":
+        account = OAuthTokenManager(config(token_endpoint_auth_method="client_secret_basic"),
+                                   "synthetic-account", vault, client_secret_provider=fail)
+        authorize = handler
+    elif source == "authorization_handler":
+        account = manager(vault)
+        authorize = fail
+    else:
+        def configure(session):
+            session.register_compliance_hook("access_token_response", fail)
+        account = manager(vault, configure_session=configure)
+        transport[1].append(token())
+        authorize = handler
+    with pytest.raises(OAuthAuthenticationError) as caught:
+        account.login(authorization_handler=authorize)
+    assert "synthetic-client-secret" not in "".join(traceback.format_exception(caught.value))
